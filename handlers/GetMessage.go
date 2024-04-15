@@ -87,6 +87,7 @@ func sendResponseToChat(chatId int64, imgUrl string) error {
 
 	req, err := http.NewRequest("POST", apiUrl, body)
 	if err != nil {
+		log.Printf("Erro when create request. %v", err)
 		return err
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
