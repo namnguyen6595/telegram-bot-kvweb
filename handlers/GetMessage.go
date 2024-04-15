@@ -59,7 +59,8 @@ func (h *GetMessageHandler) NewServe(ctx *gin.Context) {
 }
 
 func sendResponseToChat(chatId int64, imgUrl string) {
-	apiUrl := "https://api.telegram.org/bot6673474158:AAGWhE67vXABkSyL9H-ZCREhSzLrCfvDX48/sendPhoto"
+	apiUrl := "https://api.telegram.org/bot" + "6673474158:AAGWhE67vXABkSyL9H-ZCREhSzLrCfvDX48" + "/sendPhoto"
+	//"https://api.telegram.org/bot6673474158:AAGWhE67vXABkSyL9H-ZCREhSzLrCfvDX48/sendPhoto"
 	data := url.Values{}
 	data.Set("chat_id", fmt.Sprintf("%d", chatId))
 	data.Set("photo", imgUrl)
