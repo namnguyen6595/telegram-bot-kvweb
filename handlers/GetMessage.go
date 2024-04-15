@@ -66,6 +66,7 @@ func sendResponseToChat(chatId int64, imgUrl string) error {
 	//"https://api.telegram.org/bot6673474158:AAGWhE67vXABkSyL9H-ZCREhSzLrCfvDX48/sendPhoto"
 	photoData, err := base64.StdEncoding.DecodeString(imgUrl)
 	if err != nil {
+		log.Printf("Error when decode image: %v", err)
 		return err
 	}
 
@@ -75,10 +76,12 @@ func sendResponseToChat(chatId int64, imgUrl string) error {
 
 	part, err := writer.CreateFormFile("photo", "image.jpg")
 	if err != nil {
+		log.Printf("Error when create image: %v", err)
 		return err
 	}
 
 	if _, err = io.Copy(part, bytes.NewReader(photoData)); err != nil {
+		log.Printf("Error when copy image: %v", err)
 		return err
 	}
 
