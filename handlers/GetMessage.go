@@ -40,7 +40,7 @@ func (h *GetMessageHandler) NewServe(ctx *gin.Context) {
 		log.Fatalf("Error occurred during marshaling. Error: %s", err.Error())
 	}
 
-	log.Printf("Receive message from data: %v", messageData)
+	log.Printf("Receive message from data: %v", string(messageData))
 
 	// Kiểm tra xem tin nhắn có phải là lệnh /topup
 	if update.Message.Text == "/topup" {
@@ -73,6 +73,10 @@ func sendResponseToChat(chatId int64, imgUrl string) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("Received non-OK response from Telegram: %s", resp.Status)
+		messageData, err := json.MarshalIndent(resp, "", "   ")
+		if err != nil {
+			log.Printf("Error when parse data. %v", err)
+		}
+		log.Printf("Received non-OK response from Telegram: %s", string(messageData))
 	}
 }
