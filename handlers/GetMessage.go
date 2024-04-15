@@ -95,6 +95,7 @@ func sendResponseToChat(chatId int64, imgUrl string) error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
+		log.Printf("Error when request. %v", err)
 		return err
 	}
 	defer resp.Body.Close()
