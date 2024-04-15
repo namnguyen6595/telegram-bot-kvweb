@@ -73,10 +73,7 @@ func sendResponseToChat(chatId int64, imgUrl string) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		messageData, err := json.MarshalIndent(resp, "", "   ")
-		if err != nil {
-			log.Printf("Error when parse data. %v", err)
-		}
-		log.Printf("Received non-OK response from Telegram: %s", string(messageData))
+
+		log.Printf("Received non-OK response from Telegram: %s", resp)
 	}
 }
