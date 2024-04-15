@@ -15,15 +15,18 @@ func main() {
 	topupBalanceHandler := &handlers.TopupBalanceHandler{
 		balanceDmsClient,
 	}
-	getListTransaction := handlers.GetListTransaction{
+	getListTransaction := &handlers.GetListTransaction{
 		BalanceDmsClient: balanceDmsClient,
 	}
+
+	getMessagehandler := &handlers.GetMessageHandler{}
 	r := gin.Default()
 
 	router := r.Group("/api")
 
 	router.POST("/topup", topupBalanceHandler.NewServe)
 	router.GET("/transaction", getListTransaction.NewServe)
+	router.POST("/telegram", getMessagehandler.NewServe)
 
 	r.Run(":8080")
 }
