@@ -33,7 +33,7 @@ func (h *GetMessageHandler) NewServe(ctx *gin.Context) {
 
 	// Kiểm tra xem tin nhắn có phải là lệnh /topup
 	if update.Message.Text == "/topup" {
-
+		log.Printf("Data message: %v", update)
 		ctx.JSON(http.StatusOK, update)
 		return
 	}
