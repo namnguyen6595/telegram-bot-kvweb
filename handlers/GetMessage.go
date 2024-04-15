@@ -25,6 +25,12 @@ type Update struct {
 type Message struct {
 	Text string `json:"text"`
 	Chat Chat   `json:"chat"`
+	From struct {
+		ID        int    `json:"id"`
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
+		Username  string `json:"username"`
+	} `json:"from"`
 }
 
 type Chat struct {
@@ -48,7 +54,14 @@ func (h *GetMessageHandler) NewServe(ctx *gin.Context) {
 
 	// Kiểm tra xem tin nhắn có phải là lệnh /topup
 	if update.Message.Text == "/topup" {
-		log.Printf("Data message: %v", update)
+		userID := update.Message.From.ID
+		firstName := update.Message.From.FirstName
+		lastName := update.Message.From.LastName
+		username := update.Message.From.Username
+		chatID := update.Message.Chat.ID
+
+		// In ra console hoặc xử lý thông tin
+		log.Printf("Message from %s %s (Username: %s, UserID: %d) in chat %d", firstName, lastName, username, userID, chatID)
 		qrCode, _ := qr_code.GenerateVietQrCode(&qr_code.GenerateQrRequest{
 			Amount: 200,
 		})
