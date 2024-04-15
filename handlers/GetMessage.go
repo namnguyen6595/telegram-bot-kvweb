@@ -11,6 +11,7 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"strings"
 )
 
 type GetMessageHandler struct {
@@ -64,7 +65,13 @@ func (h *GetMessageHandler) NewServe(ctx *gin.Context) {
 func sendResponseToChat(chatId int64, imgUrl string) error {
 	apiUrl := "https://api.telegram.org/bot" + "6673474158:AAGWhE67vXABkSyL9H-ZCREhSzLrCfvDX48" + "/sendPhoto"
 	//"https://api.telegram.org/bot6673474158:AAGWhE67vXABkSyL9H-ZCREhSzLrCfvDX48/sendPhoto"
-	photoData, err := base64.StdEncoding.DecodeString(imgUrl)
+	commaIndex := strings.Index(imgUrl, ",")
+	if commaIndex == -1 {
+		fmt.Printf("Error when decode uri")
+		return fmt.Errorf("invalid Data URI")
+	}
+	base64Data := imgUrl[commaIndex+1:]
+	photoData, err := base64.StdEncoding.DecodeString(base64Data)
 	if err != nil {
 		log.Printf("Error when decode image: %v", err)
 		return err
