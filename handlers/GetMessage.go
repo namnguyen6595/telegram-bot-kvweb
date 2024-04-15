@@ -32,7 +32,13 @@ func (h *GetMessageHandler) NewServe(ctx *gin.Context) {
 		return
 	}
 
-	log.Printf("Receive message from data: %v", update)
+	log.Printf("Receive message from data: %v", &Update{
+		UpdateID: update.UpdateID,
+		Message: Message{
+			Chat: update.Message.Chat,
+			Text: update.Message.Text,
+		},
+	})
 
 	// Kiểm tra xem tin nhắn có phải là lệnh /topup
 	if update.Message.Text == "/topup" {
