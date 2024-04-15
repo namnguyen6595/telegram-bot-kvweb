@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	qr_code "kvweb-bot/qr-code"
 	"log"
 	"net/http"
 )
@@ -34,7 +35,10 @@ func (h *GetMessageHandler) NewServe(ctx *gin.Context) {
 	// Kiểm tra xem tin nhắn có phải là lệnh /topup
 	if update.Message.Text == "/topup" {
 		log.Printf("Data message: %v", update)
-		ctx.JSON(http.StatusOK, update)
+		qrCode, _ := qr_code.GenerateVietQrCode(&qr_code.GenerateQrRequest{
+			Amount: 200,
+		})
+		ctx.JSON(http.StatusOK, qrCode)
 		return
 	}
 
