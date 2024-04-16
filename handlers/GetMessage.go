@@ -92,7 +92,12 @@ func (h *GetMessageHandler) NewServe(ctx *gin.Context) {
 			return
 		}
 		data := getTransactionTopupById(transactions, userID, firstName+lastName)
-		log.Printf("Data transaction: %v", data)
+		message := ""
+		for _, value := range data {
+			message += fmt.Sprintf("%v \n", value)
+		}
+		log.Printf("Data transaction: %v", message)
+		helpers.SendSingleMessageToChat(chatID, message)
 		ctx.JSONP(http.StatusOK, &ListTransactionResponse{
 			Success:      true,
 			Transactions: data,

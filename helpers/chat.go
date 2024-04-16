@@ -8,12 +8,14 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
 func SendResponseImageToChat(chatId int64, imgUrl string) error {
 	apiUrl := "https://api.telegram.org/bot" + "6673474158:AAGWhE67vXABkSyL9H-ZCREhSzLrCfvDX48" + "/sendPhoto"
 	//"https://api.telegram.org/bot6673474158:AAGWhE67vXABkSyL9H-ZCREhSzLrCfvDX48/sendPhoto"
+	// Prepare data image
 	commaIndex := strings.Index(imgUrl, ",")
 	if commaIndex == -1 {
 		fmt.Printf("Error when decode uri")
@@ -65,4 +67,33 @@ func SendResponseImageToChat(chatId int64, imgUrl string) error {
 		return fmt.Errorf("received non-OK response from Telegram: %v", resp)
 	}
 	return nil
+}
+
+func SendSingleMessageToChat(chatId int64, message string) {
+	apiUrl := "https://api.telegram.org/bot" + "6673474158:AAGWhE67vXABkSyL9H-ZCREhSzLrCfvDX48" + "/sendPhoto"
+
+	body := url.Values{}
+	body.Set("chat_id", fmt.Sprintf("%v", chatId))
+	body.Set("text", message)
+
+	req, err := http.NewRequest("POST", apiUrl, strings.NewReader(body.Encode()))
+	if err != nil {
+		return
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	// Kiểm tra HTTP status
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("unexpected status: %s", resp.Status)
+		return
+	}
+
+	fmt.Println("Message sent successfully")
 }
