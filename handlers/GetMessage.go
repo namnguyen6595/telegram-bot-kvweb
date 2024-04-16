@@ -56,7 +56,7 @@ func (h *GetMessageHandler) NewServe(ctx *gin.Context) {
 	log.Printf("Receive message from data: %v", string(messageData))
 
 	// handle with message is topup
-	if update.Message.Text == "/dong-quy" {
+	if update.Message.Text == "/dongquy" {
 		userID := update.Message.From.ID
 		firstName := update.Message.From.FirstName
 		lastName := update.Message.From.LastName
@@ -82,7 +82,7 @@ func (h *GetMessageHandler) NewServe(ctx *gin.Context) {
 	}
 
 	// Xem lich su giao dich
-	if update.Message.Text == "/lich-su-quy" {
+	if update.Message.Text == "/lichsu" {
 		transactions, err := banks.GetTransaction()
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, map[string]string{
