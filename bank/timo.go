@@ -3,7 +3,9 @@ package bank
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/joho/godotenv"
 	"io/ioutil"
+	"kvweb-bot/helpers"
 	"log"
 	"net/http"
 	"time"
@@ -32,11 +34,31 @@ type ResponseData struct {
 	} `json:"data"`
 }
 
+type LogInResponse struct {
+	Data AuthorizeData `json:"data"`
+	//SecData struct {
+	//	ExpiryTime string `json:"expiryTime"`
+	//	TimeZone   string `json:"timeZone"`
+	//	ServerTime string `json:"serverTime"`
+	//	RfToken    string `json:"rfToken"`
+	//	Token      string `json:"token"`
+	//} `json:"secData"`
+}
+
+type AuthorizeData struct {
+	UserID int    `json:"userId"`
+	Lang   string `json:"lang"`
+	Token  string `json:"token"`
+}
+
 func (t *TimoBank) GetTransaction() ([]*TransactionResponse, error) {
+	env, _ := godotenv.Read(".env")
 	url := "https://app2.timo.vn/user/account/transaction/list"
 	client := http.Client{
 		Timeout: time.Second * 120, // Timeout after 2 seconds
 	}
+	now := time.Now()
+	fromDate, toDate := helpers.GetFirstAndLastDayOfMonth(now, "02/01/2006")
 	timoBody := map[string]any{
 		"format":      "group",
 		"index":       0,
@@ -47,20 +69,54 @@ func (t *TimoBank) GetTransaction() ([]*TransactionResponse, error) {
 		"toDate":      "15/04/2024",
 		"filter": map[string]string{
 			"moneyType": "all",
-			"fromDate":  "01/04/2023",
-			"toDate":    "16/04/2024",
+			"fromDate":  fromDate,
+			"toDate":    toDate,
 		},
 	}
+	token := env["BANK_TOKEN"]
 	bodyReq, _ := json.Marshal(timoBody)
-	request, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyReq))
-	token := "eyJraWQiOiJjNmIzMTNlNS1iNTAzLTQzMzEtYTdiMi0zYmNiNDVjOTA2YjUiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIzb0hEZDhwTGlEdkdrS2pFR2FweG93IiwidWlkIjoiYzc1ZThjMDItM2E0MS00Y2JlLTgzMjAtZTBiZjYzZDQ5YjBiIn0.c7c9wEhNBhcSU4524GR6cdHF9XfFFN-SWIoLosS93Do"
+	// Handle token unauthorization
+	request, err := http.NewRequest(http.MethodGet, "https://app2.timo.vn/login/quickCode/check", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("token", token)
+	resRaw, err := client.Do(request)
+	if resRaw.StatusCode == http.StatusUnauthorized {
+		bodyReq, _ = json.Marshal(map[string]string{
+			"username": "0392126595",
+			"password": "485620e6d3bad737c32d4d149347d6425c2a523cc5b59a87d00d319eceeecaf65eadfef8007165c0976e6824dd04d75161f63a3a142f95f85669d942969091a8",
+			"lang":     "vn",
+		})
+		request, err = http.NewRequest(http.MethodPost, "https://app2.timo.vn/login", bytes.NewReader(bodyReq))
+		request.Header.Set("Content-Type", "application/json")
+		authorizeData, err := client.Do(request)
+		var loginResponse *LogInResponse
+		if err != nil {
+			log.Printf("Error when re-authorize: %v", err)
+			return nil, err
+		}
+		bodyAuthorize, readErr := ioutil.ReadAll(authorizeData.Body)
+		if readErr != nil {
+			log.Printf("err: %v", readErr)
+			return nil, readErr
+		}
+
+		err = json.Unmarshal(bodyAuthorize, &loginResponse)
+		if err != nil {
+			log.Printf("Error when parse data login: %v", err)
+			return nil, err
+		}
+
+		//token = loginResponse.Data.Token
+	}
+	request, err = http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyReq))
+
 	if err != nil {
 		log.Printf("Error when create new request: %v", err)
 	}
-	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("token", token)
 	bankResponse := &ResponseData{}
-	resRaw, err := client.Do(request)
+
+	resRaw, err = client.Do(request)
 
 	if err != nil {
 		log.Printf("Error when send requst. %v", err)

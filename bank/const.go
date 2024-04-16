@@ -1,7 +1,7 @@
 package bank
 
 type TransactionResponse struct {
-	Items    *[]TransactionItem `json:"item"`
+	Items    []*TransactionItem `json:"item"`
 	DispDate string             `json:"dispDate"`
 }
 
@@ -46,3 +46,6 @@ type TransactionItem struct {
 	IsTimoMem               bool          `json:"isTimoMem"`
 	TxnTitle                string        `json:"txnTitle"`
 }
+
+const TRACSACTION_OUT = "OutgoingTransfer"
+const TRACSACTION_IN = "IncomingTransfer"
