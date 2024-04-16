@@ -1,17 +1,14 @@
 package handlers
 
 import (
-	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"io"
+	"kvweb-bot/bank"
+	"kvweb-bot/helpers"
 	qr_code "kvweb-bot/qr-code"
 	"log"
-	"mime/multipart"
 	"net/http"
-	"strings"
 )
 
 type GetMessageHandler struct {
@@ -20,6 +17,11 @@ type GetMessageHandler struct {
 type Update struct {
 	UpdateID int     `json:"update_id"`
 	Message  Message `json:"message"`
+}
+
+type ListTransactionResponse struct {
+	Success      bool                        `json:"success"`
+	Transactions []*bank.TransactionResponse `json:"transactions"`
 }
 
 type Message struct {
@@ -38,6 +40,7 @@ type Chat struct {
 }
 
 func (h *GetMessageHandler) NewServe(ctx *gin.Context) {
+	banks := bank.InitialBanks()
 	var update Update
 	if err := ctx.BindJSON(&update); err != nil {
 		log.Printf("Error parsing JSON: %v", err)
@@ -52,8 +55,8 @@ func (h *GetMessageHandler) NewServe(ctx *gin.Context) {
 
 	log.Printf("Receive message from data: %v", string(messageData))
 
-	// Kiểm tra xem tin nhắn có phải là lệnh /topup
-	if update.Message.Text == "/topup" {
+	// handle with message is topup
+	if update.Message.Text == "/dong-quy" {
 		userID := update.Message.From.ID
 		firstName := update.Message.From.FirstName
 		lastName := update.Message.From.LastName
@@ -63,70 +66,37 @@ func (h *GetMessageHandler) NewServe(ctx *gin.Context) {
 		// In ra console hoặc xử lý thông tin
 		log.Printf("Message from %s %s (Username: %s, UserID: %d) in chat %d", firstName, lastName, username, userID, chatID)
 		qrCode, _ := qr_code.GenerateVietQrCode(&qr_code.GenerateQrRequest{
-			Amount: 200,
+			Amount:      200,
+			Description: fmt.Sprintf("%v %v đóng tiền quỹ", userID, firstName+lastName),
+			Name:        fmt.Sprintf("%v", firstName+lastName),
 		})
-		sendResponseToChat(update.Message.Chat.ID, qrCode.QrDataURL)
+		err = helpers.SendResponseImageToChat(update.Message.Chat.ID, qrCode.QrDataURL)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, map[string]string{
+				"error": err.Error(),
+			})
+			return
+		}
 		ctx.JSON(http.StatusOK, qrCode)
 		return
 	}
 
-	ctx.JSONP(http.StatusOK, map[string]string{
-		"data": "update",
+	// Xem lich su giao dich
+	if update.Message.Text == "/lich-su-quy" {
+		transactions, err := banks.GetTransaction()
+		if err != nil {
+			ctx.JSON(http.StatusNotFound, map[string]string{
+				"error": err.Error(),
+			})
+			return
+		}
+		ctx.JSONP(http.StatusOK, &ListTransactionResponse{
+			Success:      true,
+			Transactions: transactions,
+		})
+	}
+
+	ctx.JSONP(http.StatusOK, &ListTransactionResponse{
+		Success: true,
 	})
-}
-
-func sendResponseToChat(chatId int64, imgUrl string) error {
-	apiUrl := "https://api.telegram.org/bot" + "6673474158:AAGWhE67vXABkSyL9H-ZCREhSzLrCfvDX48" + "/sendPhoto"
-	//"https://api.telegram.org/bot6673474158:AAGWhE67vXABkSyL9H-ZCREhSzLrCfvDX48/sendPhoto"
-	commaIndex := strings.Index(imgUrl, ",")
-	if commaIndex == -1 {
-		fmt.Printf("Error when decode uri")
-		return fmt.Errorf("invalid Data URI")
-	}
-	base64Data := imgUrl[commaIndex+1:]
-	photoData, err := base64.StdEncoding.DecodeString(base64Data)
-	if err != nil {
-		log.Printf("Error when decode image: %v", err)
-		return err
-	}
-
-	// Tạo một yêu cầu HTTP POST multipart
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-
-	part, err := writer.CreateFormFile("photo", "image.jpg")
-	if err != nil {
-		log.Printf("Error when create image: %v", err)
-		return err
-	}
-
-	if _, err = io.Copy(part, bytes.NewReader(photoData)); err != nil {
-		log.Printf("Error when copy image: %v", err)
-		return err
-	}
-
-	_ = writer.WriteField("chat_id", fmt.Sprintf("%d", chatId))
-	writer.Close()
-
-	req, err := http.NewRequest("POST", apiUrl, body)
-	if err != nil {
-		log.Printf("Erro when create request. %v", err)
-		return err
-	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-
-	// Gửi yêu cầu
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Printf("Error when request. %v", err)
-		return err
-	}
-	defer resp.Body.Close()
-
-	// Xử lý phản hồi nếu cần
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("received non-OK response from Telegram: %v", resp)
-	}
-	return nil
 }
