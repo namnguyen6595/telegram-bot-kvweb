@@ -116,7 +116,7 @@ func getTransactionTopupById(transaction []*bank.TransactionResponse, userId int
 			if item.TxnType == bank.TRACSACTION_IN {
 				subStr := fmt.Sprintf("%v %v dong tien quy", userId, name)
 				if strings.Contains(item.TxnDesc, subStr) {
-					response[name] = fmt.Sprintf("%v đã đóng quỹ vào %v ", name, item.TxnTimeTimestamp)
+					response[item.BankXID] = fmt.Sprintf("%v đã đóng quỹ vào %v ", name, item.TxnTimeTimestamp)
 				}
 			}
 		}
