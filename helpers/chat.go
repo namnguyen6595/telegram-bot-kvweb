@@ -70,7 +70,7 @@ func SendResponseImageToChat(chatId int64, imgUrl string) error {
 }
 
 func SendSingleMessageToChat(chatId int64, message string) {
-	apiUrl := "https://api.telegram.org/bot" + "6673474158:AAGWhE67vXABkSyL9H-ZCREhSzLrCfvDX48" + "/sendPhoto"
+	apiUrl := "https://api.telegram.org/bot" + "6673474158:AAGWhE67vXABkSyL9H-ZCREhSzLrCfvDX48" + "/sendMessage"
 
 	body := url.Values{}
 	body.Set("chat_id", fmt.Sprintf("%v", chatId))
