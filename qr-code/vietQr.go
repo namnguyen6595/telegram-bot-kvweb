@@ -2,6 +2,7 @@ package qr_code
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"github.com/joho/godotenv"
@@ -34,6 +35,7 @@ type QrData struct {
 }
 
 func GenerateVietQrCode(req *GenerateQrRequest) (*QrData, error) {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	env, _ := godotenv.Read(".env")
 	clientKey := env["VIETQR_CLIENT_KEY"]
 	apiKey := env["VIETQR_API_KEY"]

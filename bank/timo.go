@@ -2,6 +2,7 @@ package bank
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"github.com/joho/godotenv"
 	"io/ioutil"
@@ -52,7 +53,11 @@ type AuthorizeData struct {
 }
 
 func (t *TimoBank) GetTransaction() ([]*TransactionResponse, error) {
-	env, _ := godotenv.Read(".env")
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	env, envErr := godotenv.Read(".env")
+	if envErr != nil {
+		log.Fatalf("Error when read file env: %v", envErr)
+	}
 	url := "https://app2.timo.vn/user/account/transaction/list"
 	client := http.Client{
 		Timeout: time.Second * 120, // Timeout after 2 seconds
@@ -120,6 +125,15 @@ func (t *TimoBank) GetTransaction() ([]*TransactionResponse, error) {
 
 	if err != nil {
 		log.Printf("Error when send requst. %v", err)
+		return nil, err
+	}
+
+	if resRaw.StatusCode != http.StatusOK {
+		log.Printf("error when request: %v", map[string]interface{}{
+			"code":  resRaw.StatusCode,
+			"error": err,
+			"token": token,
+		})
 		return nil, err
 	}
 
