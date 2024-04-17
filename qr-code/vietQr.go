@@ -50,7 +50,7 @@ func GenerateVietQrCode(req *GenerateQrRequest) (*QrData, error) {
 		"amount":      fmt.Sprintf("%v", req.Amount*1000),
 		"addInfo":     req.Description,
 		"format":      "text",
-		"template":    "compact",
+		"template":    "print",
 	}
 	bodyReq, _ := json.Marshal(vietQrBody)
 	request, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyReq))
