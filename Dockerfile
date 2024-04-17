@@ -1,10 +1,12 @@
-FROM golang:1.18 as builder
+FROM golang:1.20.8
+
 WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o server .
-FROM scratch
-COPY --from=builder /app/server /server
+
+RUN go mod tidy
+
+RUN go build -o main .
+
 EXPOSE 8080
-CMD ["/server"]
+
+CMD ["./main"]

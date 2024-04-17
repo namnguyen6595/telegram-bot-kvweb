@@ -5,21 +5,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        - GITLAB_TOKEN=${GITLAB_TOKEN}
-        - DATABASE_URL=${DATABASE_URL}
-        - VIETQR_CLIENT_KEY=${VIETQR_CLIENT_KEY}
-        - VIETQR_API_KEY=${VIETQR_API_KEY}
-        - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-        - BANK_TOKEN=${BANK_TOKEN}
-        - DATABASE_NAME=${DATABASE_NAME}
-    env_file:
-      - /Users/papabread/Documents/working/backend/src/kvweb-bot/.env
     image: telegram-message
     ports:
       - 8080:8080
-    environment:
-      - GITLAB_TOKEN=${GITLAB_TOKEN}
     networks:
       - backend
     extra_hosts:
