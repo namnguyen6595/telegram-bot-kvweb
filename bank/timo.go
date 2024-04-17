@@ -85,34 +85,11 @@ func (t *TimoBank) GetTransaction() ([]*TransactionResponse, error) {
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("token", token)
 	resRaw, err := client.Do(request)
-	//if resRaw.StatusCode == http.StatusUnauthorized {
-	//	bodyReq, _ = json.Marshal(map[string]string{
-	//		"username": "0392126595",
-	//		"password": "485620e6d3bad737c32d4d149347d6425c2a523cc5b59a87d00d319eceeecaf65eadfef8007165c0976e6824dd04d75161f63a3a142f95f85669d942969091a8",
-	//		"lang":     "vn",
-	//	})
-	//	request, err = http.NewRequest(http.MethodPost, "https://app2.timo.vn/login", bytes.NewReader(bodyReq))
-	//	request.Header.Set("Content-Type", "application/json")
-	//	authorizeData, err := client.Do(request)
-	//	var loginResponse *LogInResponse
-	//	if err != nil {
-	//		log.Printf("Error when re-authorize: %v", err)
-	//		return nil, err
-	//	}
-	//	bodyAuthorize, readErr := ioutil.ReadAll(authorizeData.Body)
-	//	if readErr != nil {
-	//		log.Printf("err: %v", readErr)
-	//		return nil, readErr
-	//	}
-	//
-	//	err = json.Unmarshal(bodyAuthorize, &loginResponse)
-	//	if err != nil {
-	//		log.Printf("Error when parse data login: %v", err)
-	//		return nil, err
-	//	}
-	//
-	//	//token = loginResponse.Data.Token
-	//}
+	if resRaw.StatusCode == http.StatusUnauthorized {
+
+		loginResponse, _ := reAuthorize()
+		token = loginResponse.Data.Token
+	}
 	request, err = http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyReq))
 
 	if err != nil {
@@ -150,4 +127,46 @@ func (t *TimoBank) GetTransaction() ([]*TransactionResponse, error) {
 	}
 
 	return bankResponse.Data.Items, nil
+}
+
+func reAuthorize() (*LogInResponse, error) {
+	bodyReq, _ := json.Marshal(map[string]string{
+		"username": "0392126595",
+		"password": "485620e6d3bad737c32d4d149347d6425c2a523cc5b59a87d00d319eceeecaf65eadfef8007165c0976e6824dd04d75161f63a3a142f95f85669d942969091a8",
+		"lang":     "vn",
+	})
+	client := http.Client{
+		Timeout: time.Second * 120, // Timeout after 2 seconds
+	}
+	request, err := http.NewRequest(http.MethodPost, "https://app2.timo.vn/login", bytes.NewReader(bodyReq))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("x-timo-devicereg", "b80cd0251d7af0294b3475b2d21877a6:WEB:WEB:209:WEB:desktop:chrome")
+	request.Header.Set("user-urgent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36")
+	authorizeData, err := client.Do(request)
+	loginResponse := &LogInResponse{}
+	if err != nil {
+		log.Printf("Error when re-authorize: %v", err)
+		return nil, err
+	}
+	if authorizeData.StatusCode != http.StatusOK {
+		log.Printf("error when request: %v", map[string]interface{}{
+			"code":  authorizeData.StatusCode,
+			"error": err,
+		})
+		return nil, err
+	}
+
+	bodyAuthorize, readErr := ioutil.ReadAll(authorizeData.Body)
+	if readErr != nil {
+		log.Printf("err: %v", readErr)
+		return nil, readErr
+	}
+
+	err = json.Unmarshal(bodyAuthorize, &loginResponse)
+	if err != nil {
+		log.Printf("Error when parse data login: %v", err)
+		return nil, err
+	}
+
+	return loginResponse, nil
 }

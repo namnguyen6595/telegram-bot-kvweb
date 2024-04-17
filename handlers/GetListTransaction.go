@@ -11,7 +11,7 @@ type GetListTransaction struct {
 }
 
 func (h *GetListTransaction) NewServe(ctx *gin.Context) {
-	banks := bank.InitialBanks()
+	banks := bank.InitialBanks("timo")
 
 	response, err := banks.GetTransaction()
 

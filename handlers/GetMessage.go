@@ -41,7 +41,7 @@ type Chat struct {
 }
 
 func (h *GetMessageHandler) NewServe(ctx *gin.Context) {
-	banks := bank.InitialBanks()
+	banks := bank.InitialBanks("timo")
 	var update Update
 	if err := ctx.BindJSON(&update); err != nil {
 		log.Printf("Error parsing JSON: %v", err)
